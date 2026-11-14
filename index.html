@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VitalHealth — Astronaut Health Monitor</title>
+  <title>AstroHealth — Astronaut Health Monitor</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,8 +19,8 @@
             </svg>
           </div>
           <div class="brand-text">
-            <h2>Vital<span>Health</span></h2>
-            <span class="sub-badge">SPACE MISSION</span>
+            <h2>Astro<span>Health</span></h2>
+            <span class="sub-badge">DEEP SPACE MONITOR</span>
           </div>
         </div>
         <button class="mobile-close-btn" id="mobileCloseBtn" aria-label="Close menu">✕</button>
@@ -62,6 +62,7 @@
             </div>
             <div class="sub-menu">
               <a href="#waveforms" class="sub-item active" data-target="waveformsSection">Live Waveforms</a>
+              <a href="#hazards" class="sub-item" data-target="hazardsSection">Mission Risks &amp; Radiation</a>
               <a href="#logs" class="sub-item" data-target="telemetryTableSection">Biometric Logs</a>
             </div>
           </div>
@@ -203,7 +204,7 @@
             </div>
             <div class="user-info">
               <span class="user-name">Cmdr. Sarah Chen</span>
-              <span class="user-role">Astronaut • Online</span>
+              <span class="user-role">Astronaut • Autonomous Mode</span>
             </div>
           </div>
         </div>
@@ -224,12 +225,16 @@
               <span class="alert-sub" id="alertTimestamp">Live Bio-Telemetry Monitoring</span>
             </div>
             <p class="alert-desc" id="alertDescription">
-              All vital signs are within normal spaceflight boundaries.
+              All vital signs, radiation exposure, and cabin life-support indicators are within safe long-duration limits.
+            </p>
+            <p class="alert-guidance" id="alertGuidance">
+              Recommended action: Continue scheduled daily resistive exercise, hydration, and 8-hour sleep cycle.
             </p>
           </div>
           <div class="alert-actions">
-            <button class="sim-btn" id="simCriticalBtn" title="Simulate Oxygen < 90% Critical Alert">⚠️ Test O₂ &lt; 90%</button>
-            <button class="sim-btn" id="simWarningBtn" title="Simulate Warning Status">⚡ Test Warning</button>
+            <button class="sim-btn" id="simCriticalBtn" title="Simulate Oxygen < 90% Critical Alert">⚠️ O₂ &lt; 90%</button>
+            <button class="sim-btn" id="simRadiationBtn" title="Simulate Solar Radiation Spike">☢️ Rad Spike</button>
+            <button class="sim-btn" id="simWarningBtn" title="Simulate Cardiovascular / Thermal Warning">⚡ Warning</button>
             <button class="sim-btn outline" id="simNormalBtn" title="Restore Normal Vitals">✓ Normal</button>
           </div>
         </div>
@@ -239,7 +244,7 @@
       <div class="controls-bar">
         <div class="left-info">
           <h3>Astronaut Health Dashboard</h3>
-          <p>Real-time vital monitoring for Commander Sarah Chen aboard Deep Space Habitat</p>
+          <p>Autonomous crew self-assessment for Commander Sarah Chen • Transit Habitat (Comm Delay: 6m 40s)</p>
         </div>
         <div class="right-controls">
           <button class="live-feed-toggle active" id="liveToggleBtn">
@@ -253,7 +258,7 @@
         </div>
       </div>
 
-      <!-- 5 Health Parameter Cards -->
+      <!-- 6 Health & Radiation Parameter Cards -->
       <section class="stat-cards-grid" id="statCardsGrid">
         <!-- 1. Heart Rate -->
         <div class="card stat-card" id="cardHeartRate">
@@ -273,12 +278,12 @@
               <h2 id="valHeartRate">74</h2>
               <span class="stat-unit">BPM</span>
             </div>
-            <span class="stat-trend positive" id="trendHeartRate">Normal range</span>
+            <span class="stat-trend positive" id="trendHeartRate">● Normal</span>
           </div>
           <canvas class="sparkline-canvas" id="sparkHeartRate" width="220" height="40"></canvas>
           <div class="stat-footer">
             <span>Normal: 60 - 100 BPM</span>
-            <span class="stat-subtle">Resting pulse</span>
+            <span class="stat-subtle">Cardiovascular load</span>
           </div>
         </div>
 
@@ -306,7 +311,7 @@
           <canvas class="sparkline-canvas" id="sparkOxygen" width="220" height="40"></canvas>
           <div class="stat-footer">
             <span>Critical if &lt; 90%</span>
-            <span class="stat-subtle">Arterial O₂</span>
+            <span class="stat-subtle">Closed-habitat O₂</span>
           </div>
         </div>
 
@@ -333,7 +338,7 @@
           <canvas class="sparkline-canvas" id="sparkTemp" width="220" height="40"></canvas>
           <div class="stat-footer">
             <span>Normal: 36.5 - 37.5 °C</span>
-            <span class="stat-subtle">Core thermal</span>
+            <span class="stat-subtle">Immune &amp; thermal</span>
           </div>
         </div>
 
@@ -362,7 +367,7 @@
           </div>
           <div class="stat-footer">
             <span>Goal: 8.0 hrs</span>
-            <span class="stat-subtle">Daily sleep</span>
+            <span class="stat-subtle">Circadian recovery</span>
           </div>
         </div>
 
@@ -391,7 +396,37 @@
           </div>
           <div class="stat-footer">
             <span>Target: 150 min/day</span>
-            <span class="stat-subtle">Daily workout</span>
+            <span class="stat-subtle">Bone &amp; muscle guard</span>
+          </div>
+        </div>
+
+        <!-- 6. Radiation Exposure -->
+        <div class="card stat-card" id="cardRadiation">
+          <div class="stat-header">
+            <div class="stat-meta">
+              <span class="stat-icon-wrap rose">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                  <circle cx="12" cy="12" r="2"></circle>
+                  <path d="M12 2a10 10 0 0 1 8.66 5l-4.33 2.5A5 5 0 0 0 12 7V2z"></path>
+                  <path d="M20.66 17A10 10 0 0 1 12 22v-5a5 5 0 0 0 4.33-2.5l4.33 2.5z"></path>
+                  <path d="M3.34 17l4.33-2.5A5 5 0 0 0 12 17v5a10 10 0 0 1-8.66-5z"></path>
+                </svg>
+              </span>
+              <span class="stat-label">Radiation Dose</span>
+            </div>
+            <span class="status-tag normal" id="tagRadiation">Normal</span>
+          </div>
+          <div class="stat-body">
+            <div class="stat-value-wrap">
+              <h2 id="valRadiation">0.44</h2>
+              <span class="stat-unit">mSv/d</span>
+            </div>
+            <span class="stat-trend positive" id="trendRadiation">● Shielded</span>
+          </div>
+          <canvas class="sparkline-canvas" id="sparkRadiation" width="220" height="40"></canvas>
+          <div class="stat-footer">
+            <span>Alert if &gt; 1.2 mSv/d</span>
+            <span class="stat-subtle">Dosimeter watch</span>
           </div>
         </div>
       </section>
@@ -403,7 +438,7 @@
           <div class="card-header">
             <div>
               <h3 class="card-title">Astronaut Overview • Telemetry Waveforms</h3>
-              <p class="card-subtitle">Live time-series tracking of heart rate and oxygen saturation (hover or tap points)</p>
+              <p class="card-subtitle">Continuous time-series monitoring of heart rate and oxygen saturation (hover or tap points)</p>
             </div>
             <div class="chart-legend">
               <span class="legend-item"><span class="dot heart"></span> Heart Rate (BPM)</span>
@@ -440,16 +475,81 @@
 
           <div class="calendar-legend">
             <span><span class="dot appt"></span> Medical Check</span>
-            <span><span class="dot meeting"></span> Spacewalk</span>
-            <span><span class="dot surgery"></span> Exercise</span>
+            <span><span class="dot meeting"></span> Spacewalk / Shield</span>
+            <span><span class="dot surgery"></span> Countermeasure</span>
           </div>
 
           <div class="upcoming-item" id="calendarDetailBox">
             <div class="upcoming-dot"></div>
             <div class="upcoming-info">
               <strong id="calSelectedTitle">Mission Day 42 • Active</strong>
-              <span id="calSelectedDesc">Routine vital checkup &amp; daily workout scheduled</span>
+              <span id="calSelectedDesc">Routine vital checkup, dosimeter sync &amp; daily workout scheduled</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Spaceflight Hazard & Risk Watch Section -->
+      <section class="hazards-section" id="hazardsSection">
+        <div class="card hazards-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Spaceflight Risk &amp; Countermeasure Watch</h3>
+              <p class="card-subtitle">Real-time health risk status across the five primary deep-space mission hazards (select any hazard for guidance)</p>
+            </div>
+            <span class="autonomy-pill" id="autonomyPill">Self-Care Autonomy: Active</span>
+          </div>
+
+          <div class="hazard-grid" id="hazardGrid">
+            <button type="button" class="hazard-tile active" data-hazard="radiation">
+              <div class="hazard-top">
+                <span class="hazard-name">Space Radiation</span>
+                <span class="status-tag normal" id="hzTagRadiation">Normal</span>
+              </div>
+              <p class="hazard-metric" id="hzValRadiation">0.44 mSv/day • Cabin shielding nominal</p>
+            </button>
+
+            <button type="button" class="hazard-tile" data-hazard="gravity">
+              <div class="hazard-top">
+                <span class="hazard-name">Altered Gravity</span>
+                <span class="status-tag normal" id="hzTagGravity">Normal</span>
+              </div>
+              <p class="hazard-metric" id="hzValGravity">Fluid &amp; bone protection • 145m workout</p>
+            </button>
+
+            <button type="button" class="hazard-tile" data-hazard="isolation">
+              <div class="hazard-top">
+                <span class="hazard-name">Isolation &amp; Confinement</span>
+                <span class="status-tag normal" id="hzTagIsolation">Normal</span>
+              </div>
+              <p class="hazard-metric" id="hzValIsolation">7.6h sleep • Circadian rhythm stable</p>
+            </button>
+
+            <button type="button" class="hazard-tile" data-hazard="environment">
+              <div class="hazard-top">
+                <span class="hazard-name">Closed Environment</span>
+                <span class="status-tag normal" id="hzTagEnvironment">Normal</span>
+              </div>
+              <p class="hazard-metric" id="hzValEnvironment">SpO₂ 98.4% • Air &amp; thermal balanced</p>
+            </button>
+
+            <button type="button" class="hazard-tile" data-hazard="distance">
+              <div class="hazard-top">
+                <span class="hazard-name">Distance from Earth</span>
+                <span class="status-tag normal" id="hzTagDistance">Ready</span>
+              </div>
+              <p class="hazard-metric" id="hzValDistance">6m 40s lag • Onboard triage active</p>
+            </button>
+          </div>
+
+          <div class="hazard-detail-box" id="hazardDetailBox">
+            <div class="hazard-detail-head">
+              <strong id="hazardDetailTitle">Space Radiation • Cellular &amp; Immune Protection</strong>
+              <span class="hazard-chip" id="hazardDetailRisk">Risk Watch: Dose &amp; Tissue Health</span>
+            </div>
+            <p id="hazardDetailText">
+              Personal dosimeters track ionizing particle exposure that can affect immune response, DNA repair, and cardiovascular tissue. If dose rates exceed 1.2 mSv/day, relocate to the storm shelter bay and increase antioxidant hydration.
+            </p>
           </div>
         </div>
       </section>
@@ -460,7 +560,7 @@
           <div class="table-card-header">
             <div>
               <h3 class="card-title">Astronaut Telemetry Overview</h3>
-              <p class="card-subtitle">Recent sensor readings logged during mission monitoring</p>
+              <p class="card-subtitle">Recent onboard biometric and radiation readings logged during mission monitoring</p>
             </div>
             <div class="table-time-filter" id="tableTimeFilter">
               <button class="tab-pill active" data-range="today">Today</button>
@@ -479,6 +579,7 @@
                   <th>Heart Rate</th>
                   <th>Oxygen (SpO₂)</th>
                   <th>Body Temp</th>
+                  <th>Radiation</th>
                   <th>Sleep</th>
                   <th>Exercise</th>
                   <th>Status</th>

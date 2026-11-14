@@ -710,6 +710,13 @@ body {
   font-weight: 500;
 }
 
+.alert-guidance {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
 .alert-actions {
   display: flex;
   align-items: center;
@@ -880,6 +887,7 @@ body {
 .stat-icon-wrap.amber { background-color: rgba(245, 158, 11, 0.12); color: #f59e0b; }
 .stat-icon-wrap.blue { background-color: rgba(59, 130, 246, 0.12); color: #3b82f6; }
 .stat-icon-wrap.green { background-color: rgba(16, 185, 129, 0.12); color: #10b981; }
+.stat-icon-wrap.rose { background-color: rgba(244, 63, 94, 0.12); color: #f43f5e; }
 
 .stat-label {
   font-size: 0.82rem;
@@ -1236,6 +1244,106 @@ body {
 .upcoming-info span {
   font-size: 0.7rem;
   color: var(--text-muted);
+}
+
+/* ================= Spaceflight Risk & Countermeasure Watch ================= */
+.hazards-section {
+  margin-bottom: 24px;
+}
+
+.autonomy-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary-text);
+  background: var(--primary-light);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+}
+
+.hazard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.hazard-tile {
+  text-align: left;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.hazard-tile:hover {
+  border-color: var(--border-focus);
+  background: var(--bg-hover);
+}
+
+.hazard-tile.active {
+  background: var(--bg-card-highlight);
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.14);
+}
+
+.hazard-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hazard-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hazard-metric {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.hazard-detail-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-accent);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.hazard-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.hazard-detail-head strong {
+  font-size: 0.86rem;
+  color: var(--text-primary);
+}
+
+.hazard-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary-accent);
+  background: var(--primary-light);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.hazard-detail-box p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 /* ================= Bottom Table Section ================= */
