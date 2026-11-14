@@ -1,0 +1,6 @@
+{
+  "name": "AstroHealth",
+  "description": "Autonomous Health Monitoring & Countermeasure Support for Astronauts on Deep Space Missions",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
