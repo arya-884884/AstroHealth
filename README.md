@@ -20,8 +20,16 @@ important health indicators and recognise possible health concerns.
 -   Tracks sleep and exercise.
 -   Displays health status indicators.
 -   Provides alerts for unusual health readings.
--   Presents health information through a monitoring dashboard.
--   Tracks mission duration.
+-   Live dashboard with changing health data and telemetry charts.
+-   Health risk information based on NASA Human Research Program resources.
+
+## NASA Resources
+
+AstroHealth uses the following NASA resources to inform its spaceflight health-risk information and educational content:
+- NASA Human Spaceflight Risks: https://www.nasa.gov/hrp/risks/
+- NASA Five Hazards of Human Spaceflight: https://www.nasa.gov/hrp/hazards/
+- NASA Human Research Program: https://www.nasa.gov/hrp/
+These resources provide background information on the health risks of human spaceflight, the five major hazards of space exploration, and research into astronaut health and performance
 
 ## Technology Used
 
