@@ -16,7 +16,7 @@ important health indicators and recognise possible health concerns.
 
 ## Features
 
--   Monitors vital signs such as heart rate, oxygen level and body temperature.
+-   Monitors health parameters such as heart rate, oxygen level and body temperature.
 -   Tracks sleep and exercise.
 -   Displays health status indicators.
 -   Provides alerts for unusual health readings.
