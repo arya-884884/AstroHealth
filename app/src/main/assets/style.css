@@ -1,6 +1,6 @@
 /* =========================================================
    VitalHealth — Design System & Stylesheet
-   Supports Light Mode & Dark Mode matching reference UI/UX
+   Pure CSS Light & Dark Mode (Zero External Libraries)
    ========================================================= */
 
 :root {
@@ -11,33 +11,33 @@
   --bg-sidebar: #ffffff;
   --bg-subtle: #f8fafc;
   --bg-hover: #f1f5f9;
-  
+
   --border-color: #e5e9f2;
   --border-focus: #818cf8;
-  
+
   --text-primary: #1e293b;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  
+
   --primary-accent: #6366f1;
   --primary-light: #eef2ff;
   --primary-text: #4f46e5;
-  
+
   --secondary-accent: #06b6d4;
   --secondary-light: #ecfeff;
-  
+
   --status-normal-bg: #ecfdf5;
   --status-normal-text: #059669;
   --status-normal-border: #a7f3d0;
-  
+
   --status-warning-bg: #fffbeb;
   --status-warning-text: #d97706;
   --status-warning-border: #fde68a;
-  
+
   --status-critical-bg: #fef2f2;
   --status-critical-text: #dc2626;
   --status-critical-border: #fecaca;
-  
+
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
   --shadow-lg: 0 10px 30px -4px rgba(15, 23, 42, 0.08);
@@ -46,10 +46,10 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-full: 9999px;
-  
-  --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  
+
+  --font-main: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -60,33 +60,33 @@
   --bg-sidebar: #0e1526;
   --bg-subtle: #18233c;
   --bg-hover: #1c2946;
-  
+
   --border-color: #1e2b48;
   --border-focus: #6366f1;
-  
+
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #64748b;
-  
+
   --primary-accent: #818cf8;
   --primary-light: #1e1b4b;
   --primary-text: #c7d2fe;
-  
+
   --secondary-accent: #22d3ee;
   --secondary-light: #083344;
-  
+
   --status-normal-bg: rgba(16, 185, 129, 0.15);
   --status-normal-text: #34d399;
   --status-normal-border: rgba(52, 211, 153, 0.3);
-  
+
   --status-warning-bg: rgba(245, 158, 11, 0.15);
   --status-warning-text: #fbbf24;
   --status-warning-border: rgba(251, 191, 36, 0.3);
-  
+
   --status-critical-bg: rgba(239, 68, 68, 0.18);
   --status-critical-text: #f87171;
   --status-critical-border: rgba(248, 113, 113, 0.4);
-  
+
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 12px 35px rgba(0, 0, 0, 0.45);
@@ -97,6 +97,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -258,6 +262,18 @@ body {
   cursor: pointer;
 }
 
+.nav-group .chevron {
+  transition: transform 0.2s ease;
+}
+
+.nav-group:not(.open) .chevron {
+  transform: rotate(-90deg);
+}
+
+.nav-group:not(.open) .sub-menu {
+  display: none;
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -374,7 +390,6 @@ body {
   gap: 14px;
 }
 
-/* Mission Day & Time Chip (STEP 5) */
 .mission-time-chip {
   display: flex;
   align-items: center;
@@ -419,7 +434,7 @@ body {
   color: var(--text-primary);
 }
 
-/* ================= Theme Switch Toggle (User Reference) ================= */
+/* ================= Theme Switch Toggle ================= */
 .theme-toggle-wrapper {
   display: flex;
   align-items: center;
@@ -541,12 +556,15 @@ body {
   height: 38px;
 }
 
-.avatar-img {
-  width: 100%;
-  height: 100%;
+.avatar-svg {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  object-fit: cover;
+  overflow: hidden;
   border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .online-status {
@@ -577,23 +595,7 @@ body {
   color: var(--text-muted);
 }
 
-.settings-gear {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  transition: var(--transition);
-}
-
-.settings-gear:hover {
-  color: var(--text-primary);
-  transform: rotate(45deg);
-}
-
-/* ================= Alert Banner Section (STEP 4 & STEP 3) ================= */
+/* ================= Alert Banner Section ================= */
 .alert-section {
   margin-bottom: 20px;
 }
@@ -670,7 +672,6 @@ body {
   flex-wrap: wrap;
 }
 
-/* STEP 3: Simple Health Status Indicator: Normal / Warning / Critical */
 .status-pill {
   font-size: 0.72rem;
   font-weight: 800;
@@ -793,6 +794,11 @@ body {
   animation: pulseGreen 1.5s infinite;
 }
 
+.live-feed-toggle:not(.active) .live-blip {
+  background-color: var(--text-muted);
+  animation: none;
+}
+
 .action-btn-primary {
   display: flex;
   align-items: center;
@@ -833,7 +839,7 @@ body {
   border-color: rgba(99, 102, 241, 0.35);
 }
 
-/* ================= STEP 2: Stat Cards Grid ================= */
+/* ================= Stat Cards Grid ================= */
 .stat-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -1036,8 +1042,9 @@ body {
 
 .chart-tooltip {
   position: absolute;
-  top: 10px;
+  top: 12px;
   left: 50%;
+  transform: translateX(-50%);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -1047,6 +1054,7 @@ body {
   font-size: 0.75rem;
   display: none;
   z-index: 10;
+  min-width: 130px;
 }
 
 .tt-time {
@@ -1082,7 +1090,7 @@ body {
   font-family: var(--font-mono);
 }
 
-/* ================= Calendar Card (Matching Image 2) ================= */
+/* ================= Calendar Card ================= */
 .calendar-card {
   display: flex;
   flex-direction: column;
@@ -1091,6 +1099,7 @@ body {
 
 .calendar-header {
   margin-bottom: 12px;
+  align-items: center;
 }
 
 .calendar-month-title {
@@ -1170,6 +1179,7 @@ body {
 .cal-day.other-month {
   color: var(--text-muted);
   opacity: 0.4;
+  cursor: default;
 }
 
 .cal-dot-indicator {
@@ -1329,21 +1339,6 @@ body {
   background: var(--status-critical-bg);
   color: var(--status-critical-text);
   border: 1px solid var(--status-critical-border);
-}
-
-.action-row-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: var(--transition);
-}
-
-.action-row-btn:hover {
-  color: var(--primary-accent);
-  background-color: var(--bg-subtle);
 }
 
 /* ================= Responsive Breakpoints ================= */

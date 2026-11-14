@@ -1,50 +1,66 @@
 /**
- * VitalHealth — Astronaut Health Monitoring Software
- * Autonomous Space Mission Telemetry System
- * Pure HTML, CSS, JavaScript
+ * VitalHealth — Astronaut Health Monitoring Dashboard
+ * Pure HTML, CSS, JavaScript (Zero External Libraries)
  */
 
 (function () {
   'use strict';
 
+  function getSavedTheme() {
+    try {
+      return localStorage.getItem('vitalhealth_theme') || 'light';
+    } catch (_) {
+      return 'light';
+    }
+  }
+
   // ================= State Management =================
   const state = {
-    theme: localStorage.getItem('vitalhealth_theme') || 'light',
+    theme: getSavedTheme(),
     isLive: true,
     updateIntervalMs: 3000,
     intervalId: null,
     missionDay: 42,
-    missionStartTime: Date.now() - (42 * 86400000 + 14 * 3600000 + 32 * 60000), // Day 42, 14:32:00 MET baseline
-    
-    // Current Astronaut Telemetry (STEP 1 & STEP 2)
+    missionStartTime: Date.now() - (42 * 86400000 + 14 * 3600000 + 32 * 60000),
+
+    // Astronaut Health Parameters
     vitals: {
-      heartRate: 74,       // BPM (normal: 60 - 100)
-      oxygenLevel: 98.4,   // % SpO2 (normal: 95 - 100, < 90 is CRITICAL ALERT)
-      bodyTemp: 36.8,      // °C (normal: 36.5 - 37.5)
-      sleepDuration: 7.6,  // hours (normal: 7.0 - 8.5)
-      exerciseTime: 145    // min (target: 150 min/day on ARED)
+      heartRate: 74,       // BPM (Normal: 60 - 100)
+      oxygenLevel: 98.4,   // % SpO2 (Critical if < 90%)
+      bodyTemp: 36.8,      // °C (Normal: 36.5 - 37.5)
+      sleepDuration: 7.6,  // hours (Goal: 8.0)
+      exerciseTime: 145    // min (Target: 150)
     },
 
-    // Step 3 & Step 4: Health Status & Alerts
     healthStatus: 'NORMAL', // 'NORMAL' | 'WARNING' | 'CRITICAL'
-    alertMessage: 'All vital signs are within nominal spaceflight boundaries. No microgravity decompensation detected.',
-    alertCount: 0,
-    forcedAlertMode: null, // null | 'CRITICAL_O2' | 'WARNING_HR'
+    alertMessage: 'All vital signs are within normal spaceflight boundaries.',
+    forcedAlertMode: null,  // null | 'CRITICAL_O2' | 'WARNING_HR'
 
-    // History for chart and table
+    // History & Filtering
     history: [],
-    maxHistory: 12
+    maxHistory: 14,
+    searchQuery: '',
+    tableRange: 'today',
+
+    // Calendar State (November 2026)
+    calYear: 2026,
+    calMonth: 10, // 0-indexed (10 = November)
+    calSelectedDay: 9
   };
 
-  // Seed initial history
-  const timeLabels = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30'];
-  timeLabels.forEach((lbl, i) => {
+  // Seed initial time-varying data points
+  const seedTimes = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30'];
+  seedTimes.forEach((lbl, i) => {
+    const hr = Math.round(70 + Math.sin(i * 0.7) * 7 + (Math.random() * 4 - 2));
+    const ox = +(98.1 + Math.cos(i * 0.5) * 0.8 + (Math.random() * 0.4 - 0.2)).toFixed(1);
+    const temp = +(36.6 + Math.random() * 0.4).toFixed(1);
     state.history.push({
+      id: 100 + i,
       time: lbl,
-      heartRate: Math.round(70 + Math.sin(i * 0.8) * 6 + (Math.random() * 4 - 2)),
-      oxygenLevel: +(98.0 + Math.cos(i * 0.5) * 0.8 + (Math.random() * 0.4 - 0.2)).toFixed(1),
-      bodyTemp: +(36.7 + Math.random() * 0.3).toFixed(1),
-      sleepDuration: 7.6,
+      heartRate: hr,
+      oxygenLevel: ox,
+      bodyTemp: temp,
+      sleepDuration: +(7.2 + (i % 3) * 0.2).toFixed(1),
       exerciseTime: 120 + i * 2,
       status: 'NORMAL'
     });
@@ -53,6 +69,7 @@
   // ================= DOM Elements =================
   const htmlRoot = document.documentElement;
   const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const sidebarThemeBtn = document.getElementById('sidebarThemeBtn');
   const missionTimeDisplay = document.getElementById('missionTimeDisplay');
   const liveToggleBtn = document.getElementById('liveToggleBtn');
   const liveToggleText = document.getElementById('liveToggleText');
@@ -62,18 +79,27 @@
   const simNormalBtn = document.getElementById('simNormalBtn');
   const resetBtn = document.getElementById('resetBtn');
   const alertBadge = document.getElementById('alertBadge');
+  const notifBell = document.getElementById('notifBell');
+  const searchInput = document.getElementById('searchInput');
 
   // Cards
   const valHeartRate = document.getElementById('valHeartRate');
   const tagHeartRate = document.getElementById('tagHeartRate');
+  const trendHeartRate = document.getElementById('trendHeartRate');
   const valOxygen = document.getElementById('valOxygen');
   const tagOxygen = document.getElementById('tagOxygen');
+  const trendOxygen = document.getElementById('trendOxygen');
   const valTemp = document.getElementById('valTemp');
   const tagTemp = document.getElementById('tagTemp');
+  const trendTemp = document.getElementById('trendTemp');
   const valSleep = document.getElementById('valSleep');
   const tagSleep = document.getElementById('tagSleep');
+  const trendSleep = document.getElementById('trendSleep');
+  const sleepProgressBar = document.getElementById('sleepProgressBar');
   const valExercise = document.getElementById('valExercise');
   const tagExercise = document.getElementById('tagExercise');
+  const trendExercise = document.getElementById('trendExercise');
+  const exerciseProgressBar = document.getElementById('exerciseProgressBar');
 
   // Alert Banner
   const globalAlertBanner = document.getElementById('globalAlertBanner');
@@ -82,19 +108,36 @@
   const alertTimestamp = document.getElementById('alertTimestamp');
   const alertIconBox = document.getElementById('alertIconBox');
 
-  // Canvases
+  // Chart & Tooltip
   const mainTelemetryChart = document.getElementById('mainTelemetryChart');
+  const chartContainer = document.getElementById('chartContainer');
+  const chartTooltip = document.getElementById('chartTooltip');
+  const ttTime = document.getElementById('ttTime');
+  const ttHr = document.getElementById('ttHr');
+  const ttOx = document.getElementById('ttOx');
+  const chartAxisLabels = document.getElementById('chartAxisLabels');
   const sparkHeartRate = document.getElementById('sparkHeartRate');
   const sparkOxygen = document.getElementById('sparkOxygen');
   const sparkTemp = document.getElementById('sparkTemp');
 
-  // Table
+  // Table & Filter
   const telemetryTableBody = document.getElementById('telemetryTableBody');
+  const tableTimeFilter = document.getElementById('tableTimeFilter');
 
-  // Mobile sidebar
+  // Calendar
+  const calMonthTitle = document.getElementById('calMonthTitle');
+  const calDaysGrid = document.getElementById('calDaysGrid');
+  const calPrevMonth = document.getElementById('calPrevMonth');
+  const calNextMonth = document.getElementById('calNextMonth');
+  const calSelectedTitle = document.getElementById('calSelectedTitle');
+  const calSelectedDesc = document.getElementById('calSelectedDesc');
+
+  // Mobile sidebar & nav
   const mobileToggleBtn = document.getElementById('mobileToggleBtn');
   const mobileCloseBtn = document.getElementById('mobileCloseBtn');
   const sidebar = document.getElementById('sidebar');
+  const navGroupToggle = document.getElementById('navGroupToggle');
+  const navMonitorGroup = document.getElementById('navMonitorGroup');
 
   // ================= Theme Management =================
   function initTheme() {
@@ -104,22 +147,57 @@
   function toggleTheme() {
     state.theme = state.theme === 'light' ? 'dark' : 'light';
     htmlRoot.setAttribute('data-theme', state.theme);
-    localStorage.setItem('vitalhealth_theme', state.theme);
+    try {
+      localStorage.setItem('vitalhealth_theme', state.theme);
+    } catch (_) {
+      // Ignore storage errors in restricted webviews
+    }
     renderMainChart();
     renderSparklines();
   }
 
   themeToggleBtn.addEventListener('click', toggleTheme);
+  if (sidebarThemeBtn) {
+    sidebarThemeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleTheme();
+    });
+  }
 
-  // Mobile drawer
+  // Mobile drawer & navigation
   if (mobileToggleBtn && sidebar) {
     mobileToggleBtn.addEventListener('click', () => sidebar.classList.add('open'));
   }
   if (mobileCloseBtn && sidebar) {
     mobileCloseBtn.addEventListener('click', () => sidebar.classList.remove('open'));
   }
+  if (navGroupToggle && navMonitorGroup) {
+    navGroupToggle.addEventListener('click', () => navMonitorGroup.classList.toggle('open'));
+  }
 
-  // ================= Step 5: Mission Day & Live Time Indicator =================
+  document.querySelectorAll('.nav-item[data-target], .sub-item[data-target]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item, .sub-item').forEach((el) => el.classList.remove('active'));
+      link.classList.add('active');
+      const targetEl = document.getElementById(link.getAttribute('data-target'));
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      if (sidebar && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+      }
+    });
+  });
+
+  if (notifBell) {
+    notifBell.addEventListener('click', () => {
+      const banner = document.getElementById('alertBannerSection');
+      if (banner) banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  // ================= Mission Day & Live Time Indicator =================
   function updateMissionTime() {
     const elapsed = Date.now() - state.missionStartTime;
     const totalSeconds = Math.floor(elapsed / 1000);
@@ -128,45 +206,39 @@
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
+    state.missionDay = days;
     const pad = (n) => String(n).padStart(2, '0');
     missionTimeDisplay.textContent = `MET DAY ${days} • ${pad(hours)}:${pad(minutes)}:${pad(seconds)} UTC`;
   }
   setInterval(updateMissionTime, 1000);
   updateMissionTime();
 
-  // ================= STEP 3 & STEP 4: Health Status & Alert Condition =================
-  /**
-   * Evaluates the health status and alert conditions based on health parameters.
-   * Example requirement: If oxygen level < 90% -> CRITICAL ALERT
-   */
+  // ================= Health Status & Alert Evaluation =================
   function evaluateHealthStatus(vitals) {
     let status = 'NORMAL';
-    let message = 'All vital signs are within nominal spaceflight boundaries. No microgravity decompensation detected.';
+    let message = 'All vital signs are within normal spaceflight boundaries.';
 
-    // Condition 1 (CRITICAL ALERT - Explicit requirement from brief): Oxygen level < 90%
     if (vitals.oxygenLevel < 90.0) {
       status = 'CRITICAL';
-      message = `CRITICAL ALERT: Severe Hypoxia Detected! Arterial Oxygen Saturation is ${vitals.oxygenLevel}% (< 90%). Deploy Emergency O₂ Mask Immediately & Verify Cabin PPO₂!`;
-    }
-    // Condition 2 (CRITICAL): Extreme Tachycardia
-    else if (vitals.heartRate > 125 || vitals.heartRate < 45) {
+      message = `CRITICAL ALERT: Oxygen level dropped to ${vitals.oxygenLevel}% (< 90%). Deploy emergency oxygen mask and verify cabin air pressure immediately.`;
+    } else if (vitals.heartRate > 125 || vitals.heartRate < 45) {
       status = 'CRITICAL';
-      message = `CRITICAL ALERT: Acute Cardiac Event! Heart Rate is ${vitals.heartRate} BPM. Initiate cardiac telemetry stabilization protocol.`;
-    }
-    // Condition 3 (WARNING): Oxygen mild drop (90 - 94.5%)
-    else if (vitals.oxygenLevel < 94.5) {
+      message = `CRITICAL ALERT: Heart rate is ${vitals.heartRate} BPM (critical boundary). Stop physical exertion and initiate rest stabilization.`;
+    } else if (vitals.bodyTemp > 38.5 || vitals.bodyTemp < 35.5) {
+      status = 'CRITICAL';
+      message = `CRITICAL ALERT: Core body temperature at ${vitals.bodyTemp} °C. Immediate thermal suit check required.`;
+    } else if (vitals.oxygenLevel < 95.0) {
       status = 'WARNING';
-      message = `WARNING: Sub-optimal Oxygenation (SpO₂: ${vitals.oxygenLevel}%). Astronaut should perform deep ventilatory cycling and check mask seal.`;
-    }
-    // Condition 4 (WARNING): Tachycardia / Elevated Heart Rate
-    else if (vitals.heartRate > 100 || vitals.heartRate < 55) {
+      message = `WARNING: Mild oxygen drop detected (${vitals.oxygenLevel}%). Perform deep breathing checks and inspect cabin airflow.`;
+    } else if (vitals.heartRate > 100 || vitals.heartRate < 55) {
       status = 'WARNING';
-      message = `WARNING: Elevated Heart Rate (${vitals.heartRate} BPM). Rest protocol and hydration recommended.`;
-    }
-    // Condition 5 (WARNING): Core Temperature Elevation
-    else if (vitals.bodyTemp > 37.8 || vitals.bodyTemp < 36.0) {
+      message = `WARNING: Heart rate outside resting baseline (${vitals.heartRate} BPM). Hydration and rest advised.`;
+    } else if (vitals.bodyTemp > 37.5 || vitals.bodyTemp < 36.2) {
       status = 'WARNING';
-      message = `WARNING: Core Body Temperature Drift (${vitals.bodyTemp} °C). Active thermal regulation garment adjustment recommended.`;
+      message = `WARNING: Body temperature shifted to ${vitals.bodyTemp} °C. Adjust suit thermal cooling.`;
+    } else if (vitals.sleepDuration < 6.0) {
+      status = 'WARNING';
+      message = `WARNING: Sleep duration low (${vitals.sleepDuration} hrs). Schedule recovery rest window.`;
     }
 
     state.healthStatus = status;
@@ -174,38 +246,39 @@
     return { status, message };
   }
 
-  // ================= Random Health Data Generator (Varying Over Time) =================
+  // ================= Random Health Data Generator (Varies Over Time) =================
+  let packetCounter = 120;
+
   function generateRandomVitals() {
     if (state.forcedAlertMode === 'CRITICAL_O2') {
-      // Oxygen < 90% for testing critical alert
-      state.vitals.oxygenLevel = +(86.0 + Math.random() * 3.5).toFixed(1); // 86.0 - 89.5%
-      state.vitals.heartRate = Math.round(98 + Math.random() * 18);
-      state.vitals.bodyTemp = +(37.1 + Math.random() * 0.3).toFixed(1);
+      state.vitals.oxygenLevel = +(85.5 + Math.random() * 4.0).toFixed(1); // < 90%
+      state.vitals.heartRate = Math.round(98 + Math.random() * 16);
+      state.vitals.bodyTemp = +(37.1 + Math.random() * 0.4).toFixed(1);
     } else if (state.forcedAlertMode === 'WARNING_HR') {
-      state.vitals.oxygenLevel = +(95.0 + Math.random() * 1.5).toFixed(1);
-      state.vitals.heartRate = Math.round(112 + Math.random() * 10); // Warning tachycardia
-      state.vitals.bodyTemp = +(37.9 + Math.random() * 0.4).toFixed(1); // Space fever
+      state.vitals.oxygenLevel = +(94.2 + Math.random() * 1.8).toFixed(1);
+      state.vitals.heartRate = Math.round(108 + Math.random() * 12);
+      state.vitals.bodyTemp = +(37.7 + Math.random() * 0.4).toFixed(1);
     } else {
-      // Normal nominal flight variation
-      const hrDelta = (Math.random() - 0.48) * 4;
-      const oxDelta = (Math.random() - 0.48) * 0.4;
-      const tempDelta = (Math.random() - 0.5) * 0.1;
+      const hrDelta = (Math.random() - 0.48) * 5;
+      const oxDelta = (Math.random() - 0.48) * 0.5;
+      const tempDelta = (Math.random() - 0.5) * 0.14;
+      const sleepDelta = (Math.random() - 0.5) * 0.1;
 
       state.vitals.heartRate = Math.round(Math.min(96, Math.max(62, state.vitals.heartRate + hrDelta)));
-      state.vitals.oxygenLevel = +Math.min(99.8, Math.max(96.0, state.vitals.oxygenLevel + oxDelta)).toFixed(1);
-      state.vitals.bodyTemp = +Math.min(37.3, Math.max(36.5, state.vitals.bodyTemp + tempDelta)).toFixed(1);
-      
-      // Exercise time slowly increments
-      state.vitals.exerciseTime = Math.min(150, state.vitals.exerciseTime + (Math.random() > 0.7 ? 1 : 0));
+      state.vitals.oxygenLevel = +Math.min(99.8, Math.max(95.8, state.vitals.oxygenLevel + oxDelta)).toFixed(1);
+      state.vitals.bodyTemp = +Math.min(37.4, Math.max(36.5, state.vitals.bodyTemp + tempDelta)).toFixed(1);
+      state.vitals.sleepDuration = +Math.min(8.4, Math.max(6.8, state.vitals.sleepDuration + sleepDelta)).toFixed(1);
+      state.vitals.exerciseTime = Math.min(150, state.vitals.exerciseTime + (Math.random() > 0.65 ? 1 : 0));
     }
 
-    // Evaluate
     evaluateHealthStatus(state.vitals);
 
-    // Record to history
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    packetCounter += 1;
+
     state.history.push({
+      id: packetCounter,
       time: timeStr,
       heartRate: state.vitals.heartRate,
       oxygenLevel: state.vitals.oxygenLevel,
@@ -224,36 +297,58 @@
 
   // ================= UI Render & Update =================
   function updateUI() {
-    // 1. Update parameter cards
     valHeartRate.textContent = state.vitals.heartRate;
-    valOxygen.textContent = state.vitals.oxygenLevel;
-    valTemp.textContent = state.vitals.bodyTemp;
-    valSleep.textContent = state.vitals.sleepDuration;
+    valOxygen.textContent = state.vitals.oxygenLevel.toFixed(1);
+    valTemp.textContent = state.vitals.bodyTemp.toFixed(1);
+    valSleep.textContent = state.vitals.sleepDuration.toFixed(1);
     valExercise.textContent = state.vitals.exerciseTime;
 
-    // Status Tags
-    updateTag(tagHeartRate, state.vitals.heartRate > 100 ? (state.vitals.heartRate > 125 ? 'Critical' : 'Warning') : 'Normal');
-    updateTag(tagOxygen, state.vitals.oxygenLevel < 90 ? 'Critical Alert' : (state.vitals.oxygenLevel < 95 ? 'Warning' : 'Normal'));
-    updateTag(tagTemp, state.vitals.bodyTemp > 37.8 ? 'Warning' : 'Normal');
-    updateTag(tagSleep, 'Normal');
+    const tempF = ((state.vitals.bodyTemp * 9) / 5 + 32).toFixed(1);
+    trendTemp.textContent = `${tempF} °F`;
+
+    const sleepPct = Math.min(100, Math.round((state.vitals.sleepDuration / 8.0) * 100));
+    trendSleep.textContent = `${sleepPct}% Goal`;
+    sleepProgressBar.style.width = `${sleepPct}%`;
+
+    const exPct = Math.min(100, Math.round((state.vitals.exerciseTime / 150) * 100));
+    trendExercise.textContent = `${exPct}% Target`;
+    exerciseProgressBar.style.width = `${exPct}%`;
+
+    // Card Status Tags
+    const hrStatus = state.vitals.heartRate > 125 || state.vitals.heartRate < 45 ? 'Critical'
+      : (state.vitals.heartRate > 100 || state.vitals.heartRate < 55 ? 'Warning' : 'Normal');
+    const oxStatus = state.vitals.oxygenLevel < 90 ? 'Critical'
+      : (state.vitals.oxygenLevel < 95 ? 'Warning' : 'Normal');
+    const tempStatus = state.vitals.bodyTemp > 38.5 || state.vitals.bodyTemp < 35.5 ? 'Critical'
+      : (state.vitals.bodyTemp > 37.5 || state.vitals.bodyTemp < 36.2 ? 'Warning' : 'Normal');
+    const sleepStatus = state.vitals.sleepDuration < 6.0 ? 'Warning' : 'Normal';
+
+    updateTag(tagHeartRate, hrStatus);
+    updateTag(tagOxygen, oxStatus);
+    updateTag(tagTemp, tempStatus);
+    updateTag(tagSleep, sleepStatus);
     updateTag(tagExercise, 'Normal');
 
-    // 2. Update Global Alert Banner (Step 3 & Step 4)
+    trendHeartRate.textContent = hrStatus === 'Normal' ? '● Normal' : `▲ ${hrStatus}`;
+    trendHeartRate.className = 'stat-trend ' + (hrStatus === 'Critical' ? 'danger' : (hrStatus === 'Warning' ? 'warning' : 'positive'));
+
+    trendOxygen.textContent = oxStatus === 'Normal' ? '● Optimal' : (oxStatus === 'Warning' ? '▼ Low O₂' : '✕ CRITICAL');
+    trendOxygen.className = 'stat-trend ' + (oxStatus === 'Critical' ? 'danger' : (oxStatus === 'Warning' ? 'warning' : 'positive'));
+
+    // Global Alert Banner
     globalAlertBanner.className = `alert-banner ${state.healthStatus.toLowerCase()}`;
     mainStatusBadge.className = `status-pill ${state.healthStatus.toLowerCase()}`;
     mainStatusBadge.textContent = `HEALTH STATUS: ${state.healthStatus}`;
     alertDescription.textContent = state.alertMessage;
-    alertTimestamp.textContent = `Telemetry Updated ${new Date().toLocaleTimeString()} • Automatic Sentinel Active`;
+    alertTimestamp.textContent = `Updated ${new Date().toLocaleTimeString()} • Auto-Monitoring Active`;
 
-    // Icon in alert box
     if (state.healthStatus === 'CRITICAL') {
       alertIconBox.innerHTML = `
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-      `;
+        </svg>`;
       alertBadge.textContent = '!';
       alertBadge.style.display = 'flex';
     } else if (state.healthStatus === 'WARNING') {
@@ -262,8 +357,7 @@
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
           <line x1="12" y1="9" x2="12" y2="13"></line>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
-      `;
+        </svg>`;
       alertBadge.textContent = '1';
       alertBadge.style.display = 'flex';
     } else {
@@ -271,43 +365,39 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
           <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-      `;
+        </svg>`;
       alertBadge.style.display = 'none';
     }
 
-    // 3. Render charts and sparklines
     renderMainChart();
     renderSparklines();
-
-    // 4. Update Table
     renderTable();
   }
 
-  function updateTag(element, text) {
-    element.textContent = text;
-    element.className = 'status-tag ' + (text.toLowerCase().includes('critical') ? 'critical' : (text.toLowerCase().includes('warning') ? 'warning' : 'normal'));
+  function updateTag(element, statusLabel) {
+    element.textContent = statusLabel;
+    element.className = 'status-tag ' + statusLabel.toLowerCase();
   }
 
   // ================= Canvas Chart: Main Telemetry Spline Waveform =================
-  function renderMainChart() {
+  let chartCoords = [];
+
+  function renderMainChart(highlightIdx = -1) {
     if (!mainTelemetryChart) return;
     const ctx = mainTelemetryChart.getContext('2d');
     const width = mainTelemetryChart.width;
     const height = mainTelemetryChart.height;
     const isDark = state.theme === 'dark';
 
-    // Clear
     ctx.clearRect(0, 0, width, height);
 
     const padLeft = 40;
     const padRight = 20;
     const padTop = 20;
-    const padBottom = 30;
+    const padBottom = 26;
     const plotW = width - padLeft - padRight;
     const plotH = height - padTop - padBottom;
 
-    // Draw horizontal grid lines
     ctx.strokeStyle = isDark ? '#1e2b48' : '#e5e9f2';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
@@ -317,105 +407,150 @@
       ctx.lineTo(width - padRight, y);
       ctx.stroke();
 
-      // Axis labels
       ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
-      ctx.font = '10px JetBrains Mono';
+      ctx.font = '10px ui-monospace, monospace';
       ctx.textAlign = 'right';
-      const labelVal = Math.round(100 - i * 15);
+      const labelVal = Math.round(115 - i * 15);
       ctx.fillText(labelVal, padLeft - 8, y + 3);
     }
 
     const data = state.history;
     if (data.length < 2) return;
 
-    // Normalize Heart Rate (50 - 130 bpm -> plotH)
     const getHrY = (val) => padTop + plotH - ((val - 50) / 80) * plotH;
-    // Normalize Oxygen (85 - 100 % -> plotH)
-    const getOxY = (val) => padTop + plotH - ((val - 85) / 15) * plotH;
+    const getOxY = (val) => padTop + plotH - ((val - 82) / 20) * plotH;
     const getX = (idx) => padLeft + (idx / (data.length - 1)) * plotW;
 
-    // 1. Draw Oxygen Area & Line (Purple #6366f1)
+    chartCoords = data.map((d, i) => ({
+      x: getX(i),
+      hrY: getHrY(d.heartRate),
+      oxY: getOxY(d.oxygenLevel),
+      point: d
+    }));
+
+    // Oxygen Area
     ctx.beginPath();
-    ctx.moveTo(getX(0), height - padBottom);
-    for (let i = 0; i < data.length; i++) {
-      const x = getX(i);
-      const y = getOxY(data[i].oxygenLevel);
-      if (i === 0) ctx.lineTo(x, y);
+    ctx.moveTo(chartCoords[0].x, height - padBottom);
+    chartCoords.forEach((pt, i) => {
+      if (i === 0) ctx.lineTo(pt.x, pt.oxY);
       else {
-        const prevX = getX(i - 1);
-        const prevY = getOxY(data[i - 1].oxygenLevel);
-        const cpX = (prevX + x) / 2;
-        ctx.bezierCurveTo(cpX, prevY, cpX, y, x, y);
+        const prev = chartCoords[i - 1];
+        const cpX = (prev.x + pt.x) / 2;
+        ctx.bezierCurveTo(cpX, prev.oxY, cpX, pt.oxY, pt.x, pt.oxY);
       }
-    }
-    ctx.lineTo(getX(data.length - 1), height - padBottom);
+    });
+    ctx.lineTo(chartCoords[chartCoords.length - 1].x, height - padBottom);
     ctx.closePath();
     const oxGrad = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
-    oxGrad.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
+    oxGrad.addColorStop(0, 'rgba(99, 102, 241, 0.24)');
     oxGrad.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
     ctx.fillStyle = oxGrad;
     ctx.fill();
 
     // Oxygen Stroke
     ctx.beginPath();
-    for (let i = 0; i < data.length; i++) {
-      const x = getX(i);
-      const y = getOxY(data[i].oxygenLevel);
-      if (i === 0) ctx.moveTo(x, y);
+    chartCoords.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.oxY);
       else {
-        const prevX = getX(i - 1);
-        const prevY = getOxY(data[i - 1].oxygenLevel);
-        const cpX = (prevX + x) / 2;
-        ctx.bezierCurveTo(cpX, prevY, cpX, y, x, y);
+        const prev = chartCoords[i - 1];
+        const cpX = (prev.x + pt.x) / 2;
+        ctx.bezierCurveTo(cpX, prev.oxY, cpX, pt.oxY, pt.x, pt.oxY);
       }
-    }
+    });
     ctx.strokeStyle = '#6366f1';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // 2. Draw Heart Rate Line (Cyan #06b6d4)
+    // Heart Rate Stroke
     ctx.beginPath();
-    for (let i = 0; i < data.length; i++) {
-      const x = getX(i);
-      const y = getHrY(data[i].heartRate);
-      if (i === 0) ctx.moveTo(x, y);
+    chartCoords.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.hrY);
       else {
-        const prevX = getX(i - 1);
-        const prevY = getHrY(data[i - 1].heartRate);
-        const cpX = (prevX + x) / 2;
-        ctx.bezierCurveTo(cpX, prevY, cpX, y, x, y);
+        const prev = chartCoords[i - 1];
+        const cpX = (prev.x + pt.x) / 2;
+        ctx.bezierCurveTo(cpX, prev.hrY, cpX, pt.hrY, pt.x, pt.hrY);
       }
-    }
+    });
     ctx.strokeStyle = '#06b6d4';
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Draw End Dots
-    const lastIdx = data.length - 1;
-    // Heart dot
-    ctx.beginPath();
-    ctx.arc(getX(lastIdx), getHrY(data[lastIdx].heartRate), 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#06b6d4';
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Highlight or End Dots
+    const activeIdx = highlightIdx >= 0 && highlightIdx < chartCoords.length ? highlightIdx : chartCoords.length - 1;
+    const active = chartCoords[activeIdx];
 
-    // Oxygen dot
-    ctx.beginPath();
-    ctx.arc(getX(lastIdx), getOxY(data[lastIdx].oxygenLevel), 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#6366f1';
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    if (highlightIdx >= 0) {
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(30,41,59,0.25)';
+      ctx.beginPath();
+      ctx.moveTo(active.x, padTop);
+      ctx.lineTo(active.x, height - padBottom);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    [
+      { y: active.hrY, color: '#06b6d4' },
+      { y: active.oxY, color: '#6366f1' }
+    ].forEach(({ y, color }) => {
+      ctx.beginPath();
+      ctx.arc(active.x, y, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    // Update bottom X-axis labels dynamically
+    if (chartAxisLabels) {
+      const step = Math.max(1, Math.floor(data.length / 6));
+      const labels = data.filter((_, i) => i % step === 0 || i === data.length - 1).map((d) => d.time);
+      chartAxisLabels.innerHTML = labels.map((t) => `<span>${t}</span>`).join('');
+    }
+  }
+
+  // Interactive Chart Tooltip
+  if (mainTelemetryChart && chartTooltip) {
+    const handleInspect = (clientX) => {
+      if (!chartCoords.length) return;
+      const rect = mainTelemetryChart.getBoundingClientRect();
+      const relX = ((clientX - rect.left) / rect.width) * mainTelemetryChart.width;
+      let nearestIdx = 0;
+      let minDist = Infinity;
+      chartCoords.forEach((pt, idx) => {
+        const dist = Math.abs(pt.x - relX);
+        if (dist < minDist) {
+          minDist = dist;
+          nearestIdx = idx;
+        }
+      });
+
+      const chosen = chartCoords[nearestIdx];
+      ttTime.textContent = `${chosen.point.time} UTC`;
+      ttHr.textContent = `${chosen.point.heartRate} BPM`;
+      ttOx.textContent = `${chosen.point.oxygenLevel}%`;
+      chartTooltip.style.display = 'block';
+      chartTooltip.style.left = `${Math.min(82, Math.max(18, ((clientX - rect.left) / rect.width) * 100))}%`;
+      renderMainChart(nearestIdx);
+    };
+
+    mainTelemetryChart.addEventListener('mousemove', (e) => handleInspect(e.clientX));
+    mainTelemetryChart.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) handleInspect(e.touches[0].clientX);
+    }, { passive: true });
+    mainTelemetryChart.addEventListener('mouseleave', () => {
+      chartTooltip.style.display = 'none';
+      renderMainChart(-1);
+    });
   }
 
   // ================= Sparklines for Stat Cards =================
   function renderSparklines() {
-    drawMiniSparkline(sparkHeartRate, state.history.map(d => d.heartRate), '#06b6d4');
-    drawMiniSparkline(sparkOxygen, state.history.map(d => d.oxygenLevel), '#6366f1');
-    drawMiniSparkline(sparkTemp, state.history.map(d => d.bodyTemp), '#f59e0b');
+    drawMiniSparkline(sparkHeartRate, state.history.map((d) => d.heartRate), '#06b6d4');
+    drawMiniSparkline(sparkOxygen, state.history.map((d) => d.oxygenLevel), '#6366f1');
+    drawMiniSparkline(sparkTemp, state.history.map((d) => d.bodyTemp), '#f59e0b');
   }
 
   function drawMiniSparkline(canvas, values, strokeColor) {
@@ -442,64 +577,104 @@
     ctx.stroke();
   }
 
-  // ================= Table Rendering =================
+  // ================= Table Rendering & Filtering =================
   function renderTable() {
     if (!telemetryTableBody) return;
-    const reversed = [...state.history].reverse().slice(0, 6);
 
-    telemetryTableBody.innerHTML = reversed.map((row, idx) => {
-      const isCrit = row.oxygenLevel < 90 || row.heartRate > 125;
-      const isWarn = !isCrit && (row.oxygenLevel < 95 || row.heartRate > 100 || row.bodyTemp > 37.8);
-      const st = isCrit ? 'critical' : (isWarn ? 'warning' : 'normal');
-      const stLabel = isCrit ? 'Critical' : (isWarn ? 'Warning' : 'Normal');
+    const query = state.searchQuery.trim().toLowerCase();
+    const limit = state.tableRange === 'today' ? 6 : (state.tableRange === 'weekly' ? 8 : 12);
+
+    const rows = [...state.history].reverse().slice(0, limit).filter((row) => {
+      if (!query) return true;
+      const packetId = `#MET-${state.missionDay}-${row.id}`.toLowerCase();
+      return (
+        packetId.includes(query) ||
+        row.time.toLowerCase().includes(query) ||
+        row.status.toLowerCase().includes(query) ||
+        String(row.heartRate).includes(query) ||
+        String(row.oxygenLevel).includes(query)
+      );
+    });
+
+    if (rows.length === 0) {
+      telemetryTableBody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">
+            No matching telemetry packets found for "${state.searchQuery}".
+          </td>
+        </tr>`;
+      return;
+    }
+
+    telemetryTableBody.innerHTML = rows.map((row) => {
+      const st = row.status.toLowerCase();
+      const stLabel = row.status.charAt(0) + row.status.slice(1).toLowerCase();
 
       return `
         <tr>
-          <td><input type="checkbox" aria-label="Row select"></td>
-          <td><strong style="font-family: var(--font-mono); font-size: 0.78rem;">#MET-${state.missionDay}-${100 + idx}</strong></td>
+          <td><strong style="font-family: var(--font-mono); font-size: 0.78rem;">#MET-${state.missionDay}-${row.id}</strong></td>
           <td>${row.time} UTC</td>
           <td><strong>${row.heartRate}</strong> BPM</td>
           <td style="${row.oxygenLevel < 90 ? 'color: #ef4444; font-weight: 800;' : ''}">${row.oxygenLevel}%</td>
           <td>${row.bodyTemp}°C</td>
           <td>${row.sleepDuration}h</td>
           <td>${row.exerciseTime}m</td>
-          <td>
-            <span class="badge-status ${st}">● ${stLabel}</span>
-          </td>
-          <td>
-            <button class="action-row-btn" title="Inspect Telemetry">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </button>
-          </td>
-        </tr>
-      `;
+          <td><span class="badge-status ${st}">● ${stLabel}</span></td>
+        </tr>`;
     }).join('');
   }
 
-  // ================= Calendar Generator =================
-  function initCalendar() {
-    const grid = document.getElementById('calDaysGrid');
-    if (!grid) return;
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      renderTable();
+    });
+  }
 
-    // July 2026: Day 1 starts on Wednesday (offset 3)
-    const daysInMonth = 31;
-    const startOffset = 3; 
+  if (tableTimeFilter) {
+    tableTimeFilter.querySelectorAll('.tab-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        tableTimeFilter.querySelectorAll('.tab-pill').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.tableRange = btn.getAttribute('data-range') || 'today';
+        renderTable();
+      });
+    });
+  }
+
+  // ================= Interactive Calendar Generator =================
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const calendarEvents = {
+    4: 'Scheduled blood pressure & cardiac checkup',
+    9: 'Active Mission Day 42 • Routine vital monitoring & workout',
+    13: 'Scheduled vision & fitness evaluation',
+    16: 'Extravehicular spacewalk readiness check',
+    20: 'Weekly sleep & hydration review',
+    24: 'High-load resistance exercise assessment'
+  };
+
+  function renderCalendar() {
+    if (!calDaysGrid || !calMonthTitle) return;
+
+    const year = state.calYear;
+    const month = state.calMonth;
+    calMonthTitle.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+
     let html = '';
 
-    // Prev month padding
-    for (let i = 0; i < startOffset; i++) {
-      html += `<div class="cal-day other-month">${28 + i}</div>`;
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      html += `<div class="cal-day other-month">${prevMonthDays - i}</div>`;
     }
 
-    // Days
     for (let d = 1; d <= daysInMonth; d++) {
-      const isToday = d === 13; // Highlighted day like reference image
-      const hasAppt = d === 4 || d === 13 || d === 20;
-      const hasMeeting = d === 8 || d === 16;
-      const hasSurgery = d === 24 || d === 30;
+      const isSelected = d === state.calSelectedDay;
+      const hasAppt = d === 4 || d === 9 || d === 20;
+      const hasMeeting = d === 13 || d === 16;
+      const hasSurgery = d === 24;
 
       let dotHtml = '';
       if (hasAppt) dotHtml += '<span class="cal-dot-indicator appt"></span>';
@@ -507,17 +682,52 @@
       if (hasSurgery) dotHtml += '<span class="cal-dot-indicator surgery"></span>';
 
       html += `
-        <div class="cal-day ${isToday ? 'today active-mission' : ''}">
+        <div class="cal-day ${isSelected ? 'today active-mission' : ''}" data-day="${d}">
           ${d}
           ${dotHtml}
-        </div>
-      `;
+        </div>`;
     }
 
-    grid.innerHTML = html;
+    calDaysGrid.innerHTML = html;
+
+    calDaysGrid.querySelectorAll('.cal-day[data-day]').forEach((cell) => {
+      cell.addEventListener('click', () => {
+        const day = parseInt(cell.getAttribute('data-day'), 10);
+        state.calSelectedDay = day;
+        renderCalendar();
+        if (calSelectedTitle && calSelectedDesc) {
+          calSelectedTitle.textContent = `${monthNames[month]} ${day}, ${year}`;
+          calSelectedDesc.textContent = calendarEvents[day] || 'Standard daily biometric monitoring & exercise routine';
+        }
+      });
+    });
   }
 
-  // ================= Event Listeners & Simulator Triggers =================
+  if (calPrevMonth) {
+    calPrevMonth.addEventListener('click', () => {
+      state.calMonth -= 1;
+      if (state.calMonth < 0) {
+        state.calMonth = 11;
+        state.calYear -= 1;
+      }
+      state.calSelectedDay = 1;
+      renderCalendar();
+    });
+  }
+
+  if (calNextMonth) {
+    calNextMonth.addEventListener('click', () => {
+      state.calMonth += 1;
+      if (state.calMonth > 11) {
+        state.calMonth = 0;
+        state.calYear += 1;
+      }
+      state.calSelectedDay = 1;
+      renderCalendar();
+    });
+  }
+
+  // ================= Event Listeners & Alert Triggers =================
   function startLiveLoop() {
     if (state.intervalId) clearInterval(state.intervalId);
     state.intervalId = setInterval(generateRandomVitals, state.updateIntervalMs);
@@ -536,45 +746,37 @@
     }
   });
 
-  manualSampleBtn.addEventListener('click', () => {
-    generateRandomVitals();
-  });
+  manualSampleBtn.addEventListener('click', () => generateRandomVitals());
 
-  // STEP 4 SIMULATOR: Critical Alert Trigger (Oxygen < 90%)
   simCriticalBtn.addEventListener('click', () => {
     state.forcedAlertMode = 'CRITICAL_O2';
     generateRandomVitals();
   });
 
-  // STEP 3 & 4: Warning Alert Trigger
   simWarningBtn.addEventListener('click', () => {
     state.forcedAlertMode = 'WARNING_HR';
     generateRandomVitals();
   });
 
-  // Reset to Normal
-  simNormalBtn.addEventListener('click', () => {
-    state.forcedAlertMode = null;
-    state.vitals.heartRate = 72;
-    state.vitals.oxygenLevel = 98.6;
-    state.vitals.bodyTemp = 36.8;
-    generateRandomVitals();
-  });
-
-  resetBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  const resetNormal = () => {
     state.forcedAlertMode = null;
     state.vitals.heartRate = 74;
     state.vitals.oxygenLevel = 98.4;
     state.vitals.bodyTemp = 36.8;
+    state.vitals.sleepDuration = 7.6;
     generateRandomVitals();
+  };
+
+  simNormalBtn.addEventListener('click', resetNormal);
+  resetBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    resetNormal();
   });
 
   // ================= Initialization =================
   initTheme();
-  initCalendar();
+  renderCalendar();
   evaluateHealthStatus(state.vitals);
   updateUI();
   startLiveLoop();
-
 })();

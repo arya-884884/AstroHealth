@@ -17,7 +17,7 @@ val StarWhite = Color(0xFFF0F6FC)
 val SlateGray = Color(0xFF8B9CB5)
 val MutedText = Color(0xFF62728C)
 
-// NASA HRP Semantic Status Colors
+// Semantic Status Colors
 val StatusNominalGreen = Color(0xFF06D6A0)
 val StatusAdvisoryYellow = Color(0xFFFFD166)
 val StatusWarningOrange = Color(0xFFFF9F1C)
