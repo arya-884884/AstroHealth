@@ -16,7 +16,7 @@ important health indicators and recognise possible health concerns.
 
 ## Features
 
--   Monitors vital signs such as heart rate, SpO₂ and body temperature.
+-   Monitors vital signs such as heart rate, oxygen level and body temperature.
 -   Tracks sleep and exercise.
 -   Displays health status indicators.
 -   Provides alerts for unusual health readings.
@@ -26,6 +26,9 @@ important health indicators and recognise possible health concerns.
 ## Technology Used
 
 -   Kotlin
+-   HTML
+-   CSS
+-   JavaScript
 
 ## Project Details
 
